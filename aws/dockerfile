@@ -1,0 +1,16 @@
+# Use the latest PyTorch image as the base
+FROM pytorch/pytorch:latest
+
+# Install additional dependencies
+RUN apt-get update && apt-get install -y \
+    python3-opencv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install any other Python libraries you need
+RUN pip install boto3
+
+# Copy the frame extraction script into the container
+COPY ../video_processing/prepare_data.py /opt/ml/processing/prepare_data.py
+
+# Set the entrypoint to the script
+ENTRYPOINT ["python3", "/opt/ml/processing/prepare_data.py"]
