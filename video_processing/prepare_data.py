@@ -31,16 +31,22 @@ def prepare_train_data(frames, sequence_length: int = 5):
 
     return X,y
 
-def prepare_diffusion_data(frames, noise_scheduler, num_train_timesteps=1000):
-    # Convert frames to PyTorch tensors (B, H, W, C) → (B, C, H, W)
-    frames = torch.tensor(np.array(frames)).float().permute(0, 3, 1, 2) / 255.0
+def prepare_train_data_diffusion(frames, sequence_length=5):
+    X, y = [], []
     
-    # Sample random timesteps and noise
-    batch_size = len(frames)
-    timesteps = torch.randint(0, num_train_timesteps, (batch_size,))
-    noise = torch.randn_like(frames)
+    for i in range(len(frames) - sequence_length):
+        X.append(frames[i:i + sequence_length])
+        y.append(frames[i + sequence_length])
     
-    # Add noise to frames (forward diffusion process)
-    noisy_frames = noise_scheduler.add_noise(frames, noise, timesteps)
+    # Convert to numpy arrays and normalize to [-1, 1]
+    X = np.array(X) / 255.0 * 2 - 1
+    y = np.array(y) / 255.0 * 2 - 1
     
-    return noisy_frames, noise  # Model learns to predict noise from noisy_frames
+    # Reshape X to (N, seq_len, C, H, W) then stack channels
+    X = np.transpose(X, (0, 1, 4, 2, 3))  # (N, seq_len, C, H, W)
+    X_condition = X.reshape(X.shape[0], -1, X.shape[3], X.shape[4])  # (N, seq_len*C, H, W)
+    
+    # Reshape y to (N, C, H, W)
+    y = np.transpose(y, (0, 3, 1, 2))
+    
+    return X_condition, y
