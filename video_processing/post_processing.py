@@ -43,3 +43,45 @@ def extract_patches(image, patch_size):
                 
     return np.array(patches)
 
+import matplotlib.pyplot as plt
+
+def visualize_comparison(predicted, ground_truth, patch_size=16):
+   
+    pred_np = predicted.cpu().numpy().transpose(1, 2, 0) if isinstance(predicted, torch.Tensor) else predicted
+    gt_np = ground_truth.cpu().numpy().transpose(1, 2, 0) if isinstance(ground_truth, torch.Tensor) else ground_truth
+    
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    
+    # Original vs Predicted
+    axes[0,0].imshow(gt_np)
+    axes[0,0].set_title("Ground Truth")
+    axes[0,1].imshow(pred_np)
+    axes[0,1].set_title("Predicted")
+    
+    # Absolute difference heatmap
+    diff = np.abs(gt_np - pred_np)
+    im = axes[1,0].imshow(diff.mean(axis=-1), cmap='hot', vmin=0, vmax=0.5)
+    plt.colorbar(im, ax=axes[1,0])
+    axes[1,0].set_title("Absolute Difference Heatmap")
+    
+    # Patch-based analysis
+    patches_diff = []
+    for i in range(0, gt_np.shape[0], patch_size):
+        for j in range(0, gt_np.shape[1], patch_size):
+            patch_diff = diff[i:i+patch_size, j:j+patch_size].mean()
+            patches_diff.append(patch_diff)
+    
+    patch_grid = np.zeros((gt_np.shape[0]//patch_size, 
+                         gt_np.shape[1]//patch_size))
+    patch_grid = patch_grid.reshape(-1)
+    patch_grid[:len(patches_diff)] = patches_diff
+    patch_grid = patch_grid.reshape((gt_np.shape[0]//patch_size,
+                                   gt_np.shape[1]//patch_size))
+    
+    im = axes[1,1].imshow(patch_grid, cmap='hot', vmin=0, vmax=0.5)
+    plt.colorbar(im, ax=axes[1,1])
+    axes[1,1].set_title(f"Patch Average Differences (size {patch_size}x{patch_size})")
+    
+    plt.tight_layout()
+    plt.show()
+
