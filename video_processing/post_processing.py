@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
+import cv2
 
 def frame_analysis(predicted, ground_truth):
     """Compare frames using multiple metrics"""
