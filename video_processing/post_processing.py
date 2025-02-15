@@ -85,3 +85,37 @@ def visualize_comparison(predicted, ground_truth, patch_size=16):
     plt.tight_layout()
     plt.show()
 
+def temporal_analysis(frames, window_size=5):
+    """Analyze temporal consistency across frames"""
+    metrics = {
+        'flow_magnitude': [],
+        'intensity_change': [],
+        'temporal_ssim': []
+    }
+    
+    for i in range(len(frames)-1):
+        # Optical flow magnitude (requires previous frame)
+        flow = cv2.calcOpticalFlowFarneback(
+            cv2.cvtColor(frames[i], cv2.COLOR_RGB2GRAY),
+            cv2.cvtColor(frames[i+1], cv2.COLOR_RGB2GRAY),
+            None, 0.5, 3, 15, 3, 5, 1.2, 0
+        )
+        metrics['flow_magnitude'].append(np.sqrt(flow[...,0]**2 + flow[...,1]**2).mean())
+        
+        # Intensity change
+        metrics['intensity_change'].append(np.mean(np.abs(frames[i+1] - frames[i])))
+        
+        # Temporal SSIM
+        metrics['temporal_ssim'].append(ssim(frames[i], frames[i+1], 
+                                        multichannel=True, 
+                                        data_range=1.0))
+    
+    # Moving averages
+    for k in metrics:
+        metrics[k] = moving_average(metrics[k], window_size)
+        
+    return metrics
+
+def moving_average(x, window_size):
+    return np.convolve(x, np.ones(window_size)/window_size, mode='valid')
+
