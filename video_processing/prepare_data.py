@@ -10,7 +10,8 @@ def extract_frames(video_path: str):
         ret, frame = cap.read()
         if not ret:
             break
-        frames.append(cv2.resize(frame, (64, 64)))  # Resize to reduce complexity
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+        frames.append(cv2.resize(frame, (64, 64)))
     cap.release()
     return frames
 
@@ -38,15 +39,14 @@ def prepare_train_data_diffusion(frames, sequence_length=5):
         X.append(frames[i:i + sequence_length])
         y.append(frames[i + sequence_length])
     
-    # Convert to numpy arrays and normalize to [-1, 1]
-    X = np.array(X) / 255.0 * 2 - 1
-    y = np.array(y) / 255.0 * 2 - 1
+    # Convert to numpy arrays and normalize
+    X = np.array(X, dtype=np.float32) / 255.0 * 2 - 1  # [-1, 1]
+    y = np.array(y, dtype=np.float32) / 255.0 * 2 - 1
     
-    # Reshape X to (N, seq_len, C, H, W) then stack channels
+    # Proper channel ordering for PyTorch
     X = np.transpose(X, (0, 1, 4, 2, 3))  # (N, seq_len, C, H, W)
     X_condition = X.reshape(X.shape[0], -1, X.shape[3], X.shape[4])  # (N, seq_len*C, H, W)
     
-    # Reshape y to (N, C, H, W)
-    y = np.transpose(y, (0, 3, 1, 2))
+    y = np.transpose(y, (0, 3, 1, 2))  # (N, C, H, W)
     
     return X_condition, y
