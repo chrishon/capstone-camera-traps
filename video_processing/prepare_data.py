@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 
-def extract_frames(video_path: str):
+def extract_frames(video_path: str, size: tuple[int, ...] = (64, 64)):
     cap = cv2.VideoCapture(video_path)
     frames = []
     
@@ -11,7 +11,7 @@ def extract_frames(video_path: str):
         if not ret:
             break
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
-        frames.append(cv2.resize(frame, (64, 64)))
+        frames.append(cv2.resize(frame, dsize=size))
     cap.release()
     return frames
 
