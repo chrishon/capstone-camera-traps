@@ -135,6 +135,40 @@ def visualize_comparison(predicted, ground_truth, patch_size=16):
     plt.tight_layout()
     plt.show()
 
+def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
+    fig = plt.figure(figsize=(20, 10))
+    num_samples = len(predictions)
+    
+    # Create grid: 2 rows (predictions + diffs), num_samples columns
+    gs = fig.add_gridspec(2, num_samples + 1)
+    
+    # Ground truth
+    ax_gt = fig.add_subplot(gs[0, 0])
+    ax_gt.imshow(ground_truth)
+    ax_gt.set_title("Ground Truth")
+    
+    # Predictions and difference maps
+    for i, pred in enumerate(predictions):
+        # Prediction
+        ax_pred = fig.add_subplot(gs[0, i+1])
+        ax_pred.imshow(pred)
+        ax_pred.set_title(f"Sample {i+1}")
+        
+        # Difference map
+        ax_diff = fig.add_subplot(gs[1, i+1])
+        diff = np.abs(pred - ground_truth).mean(axis=-1)
+        ax_diff.imshow(diff, cmap='hot', vmin=0, vmax=0.5)
+        ax_diff.set_title(f"Diff {i+1}")
+    
+    # Average difference
+    ax_avg = fig.add_subplot(gs[1, 0])
+    avg_diff = np.mean([np.abs(p - ground_truth) for p in predictions], axis=0).mean(axis=-1)
+    ax_avg.imshow(avg_diff, cmap='hot', vmin=0, vmax=0.5)
+    ax_avg.set_title("Average Diff")
+    
+    plt.tight_layout()
+    plt.show()
+
 def temporal_analysis(frames, window_size=5):
     """Analyze temporal consistency across frames"""
     metrics = {
