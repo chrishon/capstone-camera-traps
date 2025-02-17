@@ -200,6 +200,35 @@ def temporal_analysis(frames, window_size=5):
         
     return metrics
 
+def multi_sample_temporal_analysis(predictions_sequence, ground_truth_sequence):
+    """Analyze temporal consistency across multiple predicted sequences"""
+    metrics = {
+        'flow_consistency': [],
+        'intensity_variance': []
+    }
+    
+    for sample_preds in predictions_sequence:
+        # Calculate temporal metrics for this sample
+        temp_metrics = temporal_analysis(sample_preds)
+        
+        # Compare to ground truth temporal metrics
+        gt_temp_metrics = temporal_analysis(ground_truth_sequence)
+        
+        # Calculate consistency metrics
+        metrics['flow_consistency'].append(
+            np.mean(np.abs(np.array(temp_metrics['flow_magnitude']) - 
+                          np.array(gt_temp_metrics['flow_magnitude'])))
+        )
+        
+        metrics['intensity_variance'].append(
+            np.var(temp_metrics['intensity_change']))
+    
+    return {
+        'flow_consistency_mean': np.mean(metrics['flow_consistency']),
+        'intensity_variance_mean': np.mean(metrics['intensity_variance']),
+        'per_sample_metrics': metrics
+    }
+
 def moving_average(x, window_size):
     return np.convolve(x, np.ones(window_size)/window_size, mode='valid')
 
