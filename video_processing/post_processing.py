@@ -3,6 +3,32 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 import cv2
 
+def predict_multiple_samples(model, condition, scheduler, device, num_samples=5):
+    model.eval()
+    with torch.no_grad():
+        # Create multiple noise instances
+        sample_shape = (num_samples, 3, 64, 64)
+        samples = torch.randn(sample_shape, device=device)
+        
+        # Repeat condition for all samples
+        condition = condition.unsqueeze(0).repeat(num_samples, 1, 1, 1).to(device)
+        
+        # Denoising loop
+        for t in scheduler.timesteps:
+            model_input = torch.cat([samples, condition], dim=1)
+            noise_pred = model(model_input, t).sample
+            samples = scheduler.step(noise_pred, t, samples).prev_sample
+        
+        # Process all samples
+        predicted_frames = []
+        for sample in samples:
+            frame = sample.cpu().numpy()
+            frame = (frame + 1) / 2  # Denormalize
+            frame = np.transpose(frame, (1, 2, 0))  # CHW to HWC
+            predicted_frames.append(frame)
+            
+        return predicted_frames
+
 def frame_analysis(predicted, ground_truth):
     """Compare frames using multiple metrics"""
     if isinstance(predicted, torch.Tensor):
