@@ -57,6 +57,29 @@ def frame_analysis(predicted, ground_truth):
     
     return results
 
+def multi_sample_frame_analysis(predictions, ground_truth):
+    """Compare multiple predictions to a single ground truth"""
+    metrics = {
+        'mae': [],
+        'ssim': [],
+        'patch_diff': []
+    }
+    
+    for pred in predictions:
+        results = frame_analysis(pred, ground_truth)
+        metrics['mae'].append(results['mean_absolute_error'])
+        metrics['ssim'].append(results['ssim'])
+        metrics['patch_diff'].append(results['patch_diff'])
+    
+    # Calculate statistics
+    return {
+        'mae_mean': np.mean(metrics['mae']),
+        'mae_std': np.std(metrics['mae']),
+        'ssim_mean': np.mean(metrics['ssim']),
+        'ssim_std': np.std(metrics['ssim']),
+        'patch_diff_dist': np.array(metrics['patch_diff'])
+    }
+
 def extract_patches(image, patch_size):
     """Extract image patches"""
     h, w, c = image.shape
