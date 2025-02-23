@@ -3,11 +3,13 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 import cv2
 
-def predict_multiple_samples(model, condition, scheduler, device, num_samples=5):
+def predict_multiple_samples(model, condition, scheduler, device, num_samples=5, size = (64,64)):
     model.eval()
     with torch.no_grad():
         # Create multiple noise instances
-        sample_shape = (num_samples, 3, 64, 64)
+        h = size[0]
+        w = size[1]
+        sample_shape = (num_samples, 3, h, w)
         samples = torch.randn(sample_shape, device=device)
         
         # Repeat condition for all samples
