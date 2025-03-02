@@ -200,12 +200,14 @@ def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
     plt.tight_layout()
     plt.show()
 
-def temporal_analysis(frames, window_size=5):
+def temporal_analysis(frames, window_size=5,patch_size=5):
     """Analyze temporal consistency across frames"""
     metrics = {
         'flow_magnitude': [],
         'intensity_change': [],
-        'temporal_ssim': []
+        'temporal_ssim': [],
+        'patch_mean_change': [],
+        'patch_std_change': []
     }
     
     for i in range(len(frames)-1):
@@ -231,7 +233,23 @@ def temporal_analysis(frames, window_size=5):
                  channel_axis=2,  # Explicit channel axis
                  win_size=7 if min(frames[i].shape[:2]) >= 7 else 3)
         )
-    
+    # New patch analysis
+        patches_curr = extract_patches(frames[i], patch_size)
+        patches_next = extract_patches(frames[i+1], patch_size)
+        
+        mean_diffs = []
+        std_diffs = []
+        
+        for p_curr, p_next in zip(patches_curr, patches_next):
+            # Calculate patch statistics
+            mean_curr, std_curr = np.mean(p_curr), np.std(p_curr)
+            mean_next, std_next = np.mean(p_next), np.std(p_next)
+            
+            mean_diffs.append(np.abs(mean_curr - mean_next))
+            std_diffs.append(np.abs(std_curr - std_next))
+        
+        metrics['patch_mean_change'].append(np.mean(mean_diffs))
+        metrics['patch_std_change'].append(np.mean(std_diffs))
     # Moving averages
     for k in metrics:
         if len(metrics[k]) > 0:
