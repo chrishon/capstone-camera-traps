@@ -286,6 +286,25 @@ def multi_sample_temporal_analysis(predictions_sequence, ground_truth_sequence):
         'per_sample_metrics': metrics
     }
 
+def plot_patch_temporal_comparison(pred_metrics, gt_metrics):
+    """Visualize patch statistics over time"""
+    fig, axs = plt.subplots(2, 1, figsize=(12, 8))
+    
+    metrics = ['patch_mean_change', 'patch_std_change']
+    titles = ['Patch Mean Absolute Change', 'Patch STD Absolute Change']
+    
+    for idx, (metric, title) in enumerate(zip(metrics, titles)):
+        axs[idx].plot(gt_metrics[metric], 'g-', label='Ground Truth')
+        axs[idx].plot(pred_metrics[metric], 'r--', label='Predicted')
+        axs[idx].set_title(title)
+        axs[idx].set_xlabel('Frame Sequence')
+        axs[idx].set_ylabel('Average Change')
+        axs[idx].legend()
+        axs[idx].grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+    
 def moving_average(x, window_size):
     return np.convolve(x, np.ones(window_size)/window_size, mode='valid')
 
