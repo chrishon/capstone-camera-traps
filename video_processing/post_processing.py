@@ -138,20 +138,45 @@ def visualize_comparison(predicted, ground_truth, patch_size=16):
     plt.show()
 
 def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
-    fig = plt.figure(figsize=(20, 10))
+    fig = plt.figure(figsize=(24, 18))  # Increased figure size
     num_samples = len(predictions)
     
-    # Create grid: 2 rows (predictions + diffs), num_samples columns
-    gs = fig.add_gridspec(2, num_samples + 1)
+    # Create grid: 3 rows (images, diffs, histograms), num_samples+1 columns
+    gs = fig.add_gridspec(3, num_samples + 1)
     
-    # Ground truth
+    # Precompute histogram data
+    gt_vals = ground_truth.flatten()
+    gt_hist, gt_bins = np.histogram(gt_vals, bins=50, range=(0, 1))
+    bin_centers = (gt_bins[:-1] + gt_bins[1:]) / 2
+    
+    # Calculate max count for consistent y-axis scaling
+    max_count = gt_hist.max()
+    for pred in predictions:
+        pred_hist, _ = np.histogram(pred.flatten(), bins=gt_bins, range=(0, 1))
+        max_count = max(max_count, pred_hist.max())
+
+    # Ground truth column
     ax_gt = fig.add_subplot(gs[0, 0])
     ax_gt.imshow(ground_truth)
     ax_gt.set_title("Ground Truth")
     
-    # Predictions and difference maps
+    # Ground truth histogram
+    ax_gt_hist = fig.add_subplot(gs[2, 0])
+    ax_gt_hist.plot(bin_centers, gt_hist, color='blue', label='Ground Truth')
+    ax_gt_hist.set_ylim(0, max_count * 1.1)
+    ax_gt_hist.set_title("Pixel Value Distribution")
+    ax_gt_hist.legend()
+
+    # Average difference
+    ax_avg = fig.add_subplot(gs[1, 0])
+    avg_diff = np.mean([np.abs(p - ground_truth) for p in predictions], axis=0).mean(axis=-1)
+    im_avg = ax_avg.imshow(avg_diff, cmap='hot', vmin=0, vmax=0.5)
+    ax_avg.set_title("Average Diff")
+    plt.colorbar(im_avg, ax=ax_avg)
+
+    # Sample columns
     for i, pred in enumerate(predictions):
-        # Prediction
+        # Prediction image
         ax_pred = fig.add_subplot(gs[0, i+1])
         ax_pred.imshow(pred)
         ax_pred.set_title(f"Sample {i+1}")
@@ -159,15 +184,19 @@ def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
         # Difference map
         ax_diff = fig.add_subplot(gs[1, i+1])
         diff = np.abs(pred - ground_truth).mean(axis=-1)
-        ax_diff.imshow(diff, cmap='hot', vmin=0, vmax=0.5)
+        im_diff = ax_diff.imshow(diff, cmap='hot', vmin=0, vmax=0.5)
         ax_diff.set_title(f"Diff {i+1}")
-    
-    # Average difference
-    ax_avg = fig.add_subplot(gs[1, 0])
-    avg_diff = np.mean([np.abs(p - ground_truth) for p in predictions], axis=0).mean(axis=-1)
-    ax_avg.imshow(avg_diff, cmap='hot', vmin=0, vmax=0.5)
-    ax_avg.set_title("Average Diff")
-    
+        plt.colorbar(im_diff, ax=ax_diff)
+        
+        # Histogram
+        ax_hist = fig.add_subplot(gs[2, i+1])
+        pred_hist, _ = np.histogram(pred.flatten(), bins=gt_bins, range=(0, 1))
+        ax_hist.plot(bin_centers, gt_hist, color='blue', label='Ground Truth')
+        ax_hist.plot(bin_centers, pred_hist, color='orange', label='Predicted')
+        ax_hist.set_ylim(0, max_count * 1.1)
+        ax_hist.set_title(f"Sample {i+1} Distribution")
+        ax_hist.legend()
+
     plt.tight_layout()
     plt.show()
 
