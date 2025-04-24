@@ -135,9 +135,10 @@ def visualize_comparison(predicted, ground_truth, patch_size=16):
     axes[1,1].set_title(f"Patch Average Differences (size {patch_size}x{patch_size})")
     
     plt.tight_layout()
+    plt.savefig('plots/gt_and_sample.pdf')
     plt.show()
 
-def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
+def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16, name= "plots/gt_and_samples.pdf"):
     fig = plt.figure(figsize=(24, 18))  # Increased figure size
     num_samples = len(predictions)
     
@@ -198,6 +199,7 @@ def visualize_multiple_comparisons(predictions, ground_truth, patch_size=16):
         ax_hist.legend()
 
     plt.tight_layout()
+    plt.savefig(name)
     plt.show()
 
 def temporal_analysis(frames, window_size=5,patch_size=5):
@@ -286,7 +288,7 @@ def multi_sample_temporal_analysis(predictions_sequence, ground_truth_sequence):
         'per_sample_metrics': metrics
     }
 
-def plot_patch_temporal_comparison(pred_metrics, gt_metrics):
+def plot_patch_temporal_comparison(pred_metrics, gt_metrics,name='plots/temporal_patch.pdf'):
     """Visualize patch statistics over time"""
     fig, axs = plt.subplots(2, 1, figsize=(12, 8))
     
@@ -303,6 +305,7 @@ def plot_patch_temporal_comparison(pred_metrics, gt_metrics):
         axs[idx].grid(True)
     
     plt.tight_layout()
+    plt.savefig(name)
     plt.show()
     
 def moving_average(x, window_size):
